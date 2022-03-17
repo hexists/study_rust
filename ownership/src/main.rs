@@ -21,6 +21,12 @@ fn main() {
 	let x = 5;
 
 	makes_copy(x);  // x 함수로 이동, 하지만 i32 타입은 복사 수행하므로 유효
+
+	// test copy, str type
+	let a = "Hello";
+	let b = a;
+
+	println!("a = {}, b = {}", a, b);
 }
 
 fn takes_ownership(some_string: String) {
