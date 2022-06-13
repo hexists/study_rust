@@ -1,6 +1,8 @@
 use std::env;
 use std::process;
+use std::fs;
 
+/*
 use minigrep::Config;
 
 fn main() {
@@ -20,8 +22,8 @@ fn main() {
         process::exit(1);
     }
 }
+*/
 
-/* STEP 4
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -29,7 +31,6 @@ fn main() {
 
     println!("검색어   : {}", config.query);
     println!("대상 파일: {}", config.filename);
-
 
     let contents = fs::read_to_string(config.filename).expect("파일을 읽지 못했습니다.");
 
@@ -49,7 +50,6 @@ impl Config {
         Config { query, filename }
     }
 }
-*/
 
 /* STEP3
 fn main() {
