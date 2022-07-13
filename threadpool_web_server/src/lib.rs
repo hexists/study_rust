@@ -3,9 +3,14 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+enum Message {
+    NewJob(Job),
+    Terminate,
+}
+
 pub struct ThreadPool {
     workers: Vec<Worker>,
-    sender: mpsc::Sender<Job>,
+    sender: mpsc::Sender<Message>,
 }
 
 impl ThreadPool {
@@ -16,7 +21,7 @@ impl ThreadPool {
     /// # Panics
     ///
     /// size 매개변수의 값이 0이면 'new' 함수는 패닉을 발생한다.
-    pub fn new(size: usize) -> ThreadPool { 
+    pub fn new(size: usize) -> ThreadPool {
         assert!(size > 0);
 
         let (sender, receiver) = mpsc::channel();
@@ -41,12 +46,18 @@ impl ThreadPool {
     {
         let job = Box::new(f);
 
-        self.sender.send(job).unwrap();
+        self.sender.send(Message::NewJob(job)).unwrap();
     }
 }
 
 impl Drop for ThreadPool {
     fn drop(&mut self) {
+        println!("모든 작업자 종료");
+
+        for _ in &mut self.workers {
+            self.sender.send(Message::Terminate).unwrap();
+        }
+
         for worker in &mut self.workers {
             println!("종료: 작업자 {}", worker.id);
 
@@ -75,14 +86,23 @@ struct Worker {
 }
 
 impl Worker {
-    fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
+    fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) -> Worker {
         let thread = thread::spawn(move || {
             loop {
-                let job = receiver.lock().unwrap().recv().unwrap();
+                let message = receiver.lock().unwrap().recv().unwrap();
 
-                println!("시작: 작업자 {}", id);
+                match message {
+                    Message::NewJob(job) => {
+                        println!("시작: 작업자 {}", id);
 
-                job.call_box();
+                        job.call_box();
+                    },
+                    Message::Terminate => {
+                        println!("종료 메시지 수신: 작업자 {}", id);
+
+                        break;
+                    }
+                }
             }
         });
 
